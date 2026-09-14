@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-424ca070c6d09b06beacd0632f922267ec582317",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.16.0"
+  },
+  "userSourceNameMap": {
+    "contracts/MultiSend.sol": "project/contracts/MultiSend.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/MultiSend.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract MultiSend {\n    event Sent(address indexed recipient, uint256 amount);\n    event MultiSendCompleted(uint256 totalRecipients, uint256 totalAmount);\n\n    // Sends equal amounts of Ether to each address in the array.\n    // \"payable\" allows this function to receive ETH along with the call.\n    function multiSend(address[] calldata recipients) public payable {\n        uint256 numberOfRecipients = recipients.length;\n\n        // Basic safety checks\n        require(numberOfRecipients > 0, \"Recipient list is empty\");\n        require(msg.value > 0, \"Must send some Ether\");\n\n        // Calculate equal share per recipient (integer division)\n        uint256 amountPerRecipient = msg.value / numberOfRecipients;\n        require(amountPerRecipient > 0, \"Amount too small to split\");\n\n        // Loop through each address and send their share\n        for (uint256 i = 0; i < numberOfRecipients; i++) {\n            address recipient = recipients[i];\n            require(recipient != address(0), \"Invalid address in list\");\n\n            (bool success, ) = payable(recipient).call{value: amountPerRecipient}(\"\");\n            require(success, \"Transfer failed for one recipient\");\n\n            emit Sent(recipient, amountPerRecipient);\n        }\n\n        emit MultiSendCompleted(numberOfRecipients, msg.value);\n    }\n}"
+      }
+    }
+  }
+}
