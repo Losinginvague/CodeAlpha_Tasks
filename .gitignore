@@ -6,3 +6,4 @@ artifacts/
 !.env.example
 coverage/
 typechain-types/
+ignition/deployments/
