@@ -29,3 +29,12 @@
 
 # Snapshot cheatcodes output
 /snapshots
+
+# Gas snapshot files
+/.gas-snapshot
+
+# Snapshot cheatcodes output
+/snapshots
+
+# Hardhat deployment files
+/ignition/deployments
