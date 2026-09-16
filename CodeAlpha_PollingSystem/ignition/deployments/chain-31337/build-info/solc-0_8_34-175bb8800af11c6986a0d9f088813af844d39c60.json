@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-175bb8800af11c6986a0d9f088813af844d39c60",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.16.0"
+  },
+  "userSourceNameMap": {
+    "contracts/PollingSystem.sol": "project/contracts/PollingSystem.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/PollingSystem.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.19;\n\ncontract PollingSystem {\n    struct Poll {\n        string title;\n        string[] options;\n        uint256 endTime;\n        mapping(uint256 => uint256) votesPerOption; // option index => vote count\n        mapping(address => bool) hasVoted;\n        bool exists;\n    }\n\n    // Poll ID => Poll data\n    mapping(uint256 => Poll) private polls;\n    uint256 public pollCount;\n\n    event PollCreated(uint256 indexed pollId, string title, uint256 endTime);\n    event VoteCast(uint256 indexed pollId, address indexed voter, uint256 optionIndex);\n\n    // Creates a new poll with a title, a list of options, and a voting duration (in seconds)\n    function createPoll(string memory title, string[] memory options, uint256 durationInSeconds) public {\n        require(options.length >= 2, \"Poll needs at least 2 options\");\n        require(durationInSeconds > 0, \"Duration must be greater than 0\");\n\n        uint256 pollId = pollCount;\n        Poll storage newPoll = polls[pollId];\n\n        newPoll.title = title;\n        newPoll.options = options;\n        newPoll.endTime = block.timestamp + durationInSeconds;\n        newPoll.exists = true;\n\n        pollCount++;\n\n        emit PollCreated(pollId, title, newPoll.endTime);\n    }\n\n    // Casts a vote for a specific option in a specific poll\n    function vote(uint256 pollId, uint256 optionIndex) public {\n        Poll storage poll = polls[pollId];\n\n        require(poll.exists, \"Poll does not exist\");\n        require(block.timestamp < poll.endTime, \"Voting period has ended\");\n        require(!poll.hasVoted[msg.sender], \"You have already voted in this poll\");\n        require(optionIndex < poll.options.length, \"Invalid option index\");\n\n        poll.hasVoted[msg.sender] = true;\n        poll.votesPerOption[optionIndex] += 1;\n\n        emit VoteCast(pollId, msg.sender, optionIndex);\n    }\n\n    // Returns the winning option's index and its vote count, after the poll has ended\n    function getWinner(uint256 pollId) public view returns (string memory winningOption, uint256 winningVoteCount) {\n        Poll storage poll = polls[pollId];\n\n        require(poll.exists, \"Poll does not exist\");\n        require(block.timestamp >= poll.endTime, \"Poll is still ongoing\");\n\n        uint256 winningIndex = 0;\n        uint256 highestVotes = 0;\n\n        for (uint256 i = 0; i < poll.options.length; i++) {\n            if (poll.votesPerOption[i] > highestVotes) {\n                highestVotes = poll.votesPerOption[i];\n                winningIndex = i;\n            }\n        }\n\n        return (poll.options[winningIndex], highestVotes);\n    }\n\n    // Helper: view a poll's basic details (structs with mappings can't be returned directly)\n    function getPollDetails(uint256 pollId) public view returns (string memory title, string[] memory options, uint256 endTime) {\n        Poll storage poll = polls[pollId];\n        require(poll.exists, \"Poll does not exist\");\n        return (poll.title, poll.options, poll.endTime);\n    }\n\n    // Helper: check how many votes a specific option currently has\n    function getVoteCount(uint256 pollId, uint256 optionIndex) public view returns (uint256) {\n        Poll storage poll = polls[pollId];\n        require(poll.exists, \"Poll does not exist\");\n        require(optionIndex < poll.options.length, \"Invalid option index\");\n        return poll.votesPerOption[optionIndex];\n    }\n}"
+      }
+    }
+  }
+}
