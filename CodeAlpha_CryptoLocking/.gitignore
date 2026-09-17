@@ -35,6 +35,3 @@
 
 # Snapshot cheatcodes output
 /snapshots
-
-# Hardhat deployment files
-/ignition/deployments
