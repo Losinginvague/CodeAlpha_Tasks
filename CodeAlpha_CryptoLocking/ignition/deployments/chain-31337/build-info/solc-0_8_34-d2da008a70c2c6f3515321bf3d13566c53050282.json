@@ -1,0 +1,49 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_34-d2da008a70c2c6f3515321bf3d13566c53050282",
+  "solcVersion": "0.8.34",
+  "solcLongVersion": "0.8.34+commit.80d5c536",
+  "compilerType": "solc",
+  "toolVersions": {
+    "hardhat": "3.16.0"
+  },
+  "userSourceNameMap": {
+    "contracts/CryptoLock.sol": "project/contracts/CryptoLock.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "osaka",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/CryptoLock.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.24;\n\ncontract CryptoLock {\n    // Stores the amount deposited by each user\n    mapping(address => uint256) public deposits;\n\n    // Stores the time when each user's funds can be withdrawn\n    mapping(address => uint256) public unlockTime;\n\n    // Events for tracking deposits and withdrawals\n    event Deposited(\n        address indexed user,\n        uint256 amount,\n        uint256 unlockTime\n    );\n\n    event Withdrawn(\n        address indexed user,\n        uint256 amount\n    );\n\n    // Deposit Ether and lock it for a specified duration\n    function deposit(uint256 _lockDuration) external payable {\n        require(msg.value > 0, \"Deposit must be greater than zero\");\n        require(_lockDuration > 0, \"Lock duration must be positive\");\n\n        // This version supports one active deposit per address.\n        require(\n            deposits[msg.sender] == 0,\n            \"Existing deposit must be withdrawn first\"\n        );\n\n        deposits[msg.sender] = msg.value;\n        unlockTime[msg.sender] = block.timestamp + _lockDuration;\n\n        emit Deposited(\n            msg.sender,\n            msg.value,\n            unlockTime[msg.sender]\n        );\n    }\n\n    // Withdraw funds after the lock period ends\n    function withdraw() external {\n        require(deposits[msg.sender] > 0, \"No active deposit\");\n        require(\n            block.timestamp >= unlockTime[msg.sender],\n            \"Funds are still locked\"\n        );\n\n        uint256 amount = deposits[msg.sender];\n\n        // Clear the state before transferring Ether\n        deposits[msg.sender] = 0;\n        unlockTime[msg.sender] = 0;\n\n        (bool success, ) = payable(msg.sender).call{value: amount}(\"\");\n\n        require(success, \"Transfer failed\");\n\n        emit Withdrawn(msg.sender, amount);\n    }\n\n    // Returns the remaining lock time\n    function getRemainingLockTime()\n        external\n        view\n        returns (uint256)\n    {\n        if (block.timestamp >= unlockTime[msg.sender]) {\n            return 0;\n        }\n\n        return unlockTime[msg.sender] - block.timestamp;\n    }\n}"
+      }
+    }
+  }
+}
