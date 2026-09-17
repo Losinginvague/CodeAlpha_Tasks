@@ -6,4 +6,3 @@ artifacts/
 !.env.example
 coverage/
 typechain-types/
-/CodeAlpha_CryptoLocking/ignition/deployments/
